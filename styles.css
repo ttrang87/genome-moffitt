@@ -2,7 +2,7 @@
     display: flex;
     width: 100%;
     justify-content: space-between;
-    gap: 50px;
+    gap: 70px;
     padding: 30px;
     padding-right: 50px
 }
@@ -118,11 +118,21 @@ button {
 }
 
 .track-list {
-    padding-left: 30px;
+    padding-left: 50px;
     display: grid;
     grid-template-columns: repeat(6, 1fr);
     gap: 5px;
     width: 100%;
+}
+
+.track-name {
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.track-name:hover {
+    text-decoration: underline;
+    color: #5072A7;
 }
 
 .remove-track {

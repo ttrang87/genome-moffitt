@@ -1,7 +1,8 @@
+import { openRowVisualizationWindow } from "./eachRowVisualize.js";
 let currentData = [];
 const ROWS_PER_PAGE = 25;
 let visibleRows = ROWS_PER_PAGE;
-let activeVisualizationTracks = []; 
+let activeVisualizationTracks = [];
 
 function shortenUrl(url) {
     try {
@@ -25,7 +26,7 @@ function setupSearch() {
     searchInput.addEventListener('input', function () {
         const searchTerm = this.value.toLowerCase();
         const filteredData = currentData.filter((row, index) => {
-            if (index === 0) return true; 
+            if (index === 0) return true;
             return row[0].toLowerCase().includes(searchTerm); // Search in first column (cell line)
         });
         createTable(filteredData, Math.min(filteredData.length, visibleRows));
@@ -35,27 +36,32 @@ function setupSearch() {
     document.querySelector('.upload-section').appendChild(searchContainer);
 }
 
-document.getElementById('fileInput').addEventListener('change', function (e) {
-    const file = e.target.files[0];
-    const reader = new FileReader();
-
-    reader.onload = function (event) {
-        try {
-            const content = event.target.result;
-            currentData = parseCSV(content);
-            visibleRows = ROWS_PER_PAGE;
-            createTable(currentData, visibleRows);
-            setupSearch(); // Add search after loading data
-            activeVisualizationTracks = []; // Reset tracks
-            updateVisualization(); // Clear visualization
-        } catch (error) {
-            console.log('Error occurred:', error);
-            document.getElementById('tableContainer').innerHTML = 'Error: ' + error.message;
-        }
-    };
-
-    reader.readAsText(file);
-});
+function loadData() {
+    fetch('./data.csv')
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`Failed to load file: ${response.status}`);
+            }
+            return response.text();
+        })
+        .then(content => {
+            try {
+                currentData = parseCSV(content);
+                visibleRows = ROWS_PER_PAGE;
+                createTable(currentData, visibleRows);
+                setupSearch(); // Add search functionality
+                activeVisualizationTracks = []; // Reset tracks
+                updateVisualization(); // Clear visualization
+            } catch (error) {
+                console.error('Error occurred:', error);
+                document.getElementById('tableContainer').innerHTML = 'Error: ' + error.message;
+            }
+        })
+        .catch(error => {
+            console.error('Error fetching the data file:', error);
+            document.getElementById('tableContainer').innerHTML = 'Error: Could not load data file.';
+        });
+}
 
 function parseCSV(content) {
     const lines = content.split('\n');
@@ -65,6 +71,10 @@ function parseCSV(content) {
         )
     );
 }
+
+// Call the function to load data from the CSV file
+loadData();
+
 
 function updateVisualization() {
     const visualizationContainer = document.getElementById('visualizationContainer');
@@ -81,6 +91,11 @@ function updateVisualization() {
 
             const trackName = document.createElement('span');
             trackName.textContent = `${track.cellLine}`;
+            trackName.className = 'track-name'; // Add this line
+            trackName.addEventListener('click', function () {
+                openRowVisualizationWindow(track);
+            });
+
 
             const removeButton = document.createElement('button');
             removeButton.textContent = '×';
@@ -131,7 +146,7 @@ function updateVisualization() {
                 ...activeVisualizationTracks.map(track => ({
                     type: 'bigwig',
                     url: track.fileUrl,
-                    name: `${track.cellLine}` 
+                    name: `${track.cellLine}`
                 }))
             ],
         });
